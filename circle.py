@@ -6,10 +6,13 @@ import numpy as np
 
 EDGE_DETECTOR_OF_LIE = 10
 
-def LieDetectorByEyePupilResize(circles):
+def LieDetectorByEyePupilResize(circlesCenterX, circlesCenterY, circleRadius):
     square = 0.0
-    for eyePupil in circles[0,:]:
-        square = math.pi * eyePupil[2] * eyePupil[2]
+    #for eyePupil in circles:
+    square = math.pi * circleRadius * circleRadius
+    print("")
+    print("[DEBUG:] ", square)
+    print("")
     return square
 
 if __name__ == '__main__':
@@ -22,8 +25,10 @@ if __name__ == '__main__':
         cap.release()
         cv3.destroyAllWindows()
 
+    measureTimeInterval = int(sys.argv[1])
+
     while True:
-        measureTimeInterval = int(sys.argv[1])
+
         squareStart = 0.0
         squareResult = 0.0
 
@@ -51,8 +56,8 @@ if __name__ == '__main__':
         circles = cv3.HoughCircles(filtered_gray,cv3.HOUGH_GRADIENT,1,25,
                                     param1=200,param2=22,minRadius=5,maxRadius=25)
 
-        if measureTimeInterval == int(sys.argv[1]):
-            squareStart = LieDetectorByEyePupilResize(circles)
+        #if measureTimeInterval == int(sys.argv[1]):
+            #squareStart = LieDetectorByEyePupilResize(circles)
 
         if circles is not None:
             circles = np.uint16(np.around(circles))
@@ -61,14 +66,22 @@ if __name__ == '__main__':
                 cv3.circle(frame,(i[0],i[1]),i[2],(0,255,0),1)
                 # draw the center of the circle
                 cv3.circle(frame,(i[0],i[1]),2,(0,0,255),2)
+                # calc
+                if measureTimeInterval == int(sys.argv[1]):
+                    squareStart = LieDetectorByEyePupilResize( i[0], i[1], i[2] )
+                squareResult = LieDetectorByEyePupilResize( i[0], i[1], i[2] )
         cv3.imshow('Videonistagmography System - Circles Detected', frame)
 
         measureTimeInterval -= 1
 
         if measureTimeInterval == 0:
-            squareResult = LieDetectorByEyePupilResize(circles)
-            if(math.fabs(squareResult - squareStart) > EDGE_DETECTOR_OF_LIE)
+            print("Time Interval is over")
+            #squareResult = LieDetectorByEyePupilResize(circles)
+            measureTimeInterval = int(sys.argv[1])
+            if math.fabs(squareResult - squareStart) > EDGE_DETECTOR_OF_LIE:
                 print("He/She is liar and forger")
+            else:
+                print("He/She is fine human")
 
         #cv3.waitKey(25)
         k = cv3.waitKey(30) & 0xff
