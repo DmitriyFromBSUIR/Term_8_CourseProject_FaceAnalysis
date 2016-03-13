@@ -1,3 +1,7 @@
+About Project 
+	Working python code located in circle.py and main.py file. Other files are experimental.
+
+
 Немного теории
 
 Расширение зрачков
