@@ -22,7 +22,7 @@ PATCH_OF_REFLECTED_LIGHT = 300
         Distance from face to web-camera is approximatly 5 sm
         Evening, low light + additional light
     Result
-        The square of eye pupil is approximatl 1100 - 1300 pixels (jumps 1600-1800)
+        The square of eye pupil is approximatly 1100 - 1300 pixels (jumps 1600-1800)
 '''
 
 def LieDetectorByEyePupilResize(squareStart, squareResult):
