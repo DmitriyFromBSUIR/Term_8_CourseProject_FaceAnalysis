@@ -1,25 +1,57 @@
 # Project for Eye's Pupil detection and tracking (included some math analysis)
 import sys
 import math
-import cv2 as cv3
+import cv2 as cv3 # use OpenCV 3.0 with Python 3.4
 import numpy as np
 
-EDGE_DETECTOR_OF_LIE = 10
+EDGE_DETECTOR_OF_LIE = 100
 
-def LieDetectorByEyePupilResize(circlesCenterX, circlesCenterY, circleRadius):
+PATCH_OF_REFLECTED_LIGHT = 300
+
+'''
+    Experimental Data:
+
+    ---1---
+    Conditions:
+        Distance from face to web-camera is approximatly 10 sm
+        Evening, low light + additional light
+    Result
+        The square of eye pupil is 300 - 700 pixels
+    ---2---
+    Conditions:
+        Distance from face to web-camera is approximatly 5 sm
+        Evening, low light + additional light
+    Result
+        The square of eye pupil is 1100 - 1300 pixels (jumps 1600-1800)
+'''
+
+def LieDetectorByEyePupilResize(squareStart, squareResult):
+    print("Time Interval is over")
+    #squareResult = LieDetectorByEyePupilResize(circles)
+
+    if math.fabs(squareResult - squareStart) > EDGE_DETECTOR_OF_LIE:
+        print("He/She is liar and forger")
+    else:
+        print("He/She is fine human")
+
+
+def circlesSquareCalculation(circlesCenterX, circlesCenterY, circleRadius):
     square = 0.0
     #for eyePupil in circles:
     square = math.pi * circleRadius * circleRadius
     print("")
-    print("[DEBUG:] ", square)
+    if square > PATCH_OF_REFLECTED_LIGHT:
+        print("[DEBUG:] ", square)
     print("")
     return square
+
 
 if __name__ == '__main__':
     print("Face & Eyes Analysis is running")
     #img = cv2.imread('opencv_logo.png',0)
 
-    cap = cv3.VideoCapture(0)
+    # set camera number to 1 for use additional usb camera
+    cap = cv3.VideoCapture(1)
     if not cap.isOpened():
         print("Error! Can't capture the video")
         cap.release()
@@ -27,6 +59,7 @@ if __name__ == '__main__':
 
     measureTimeInterval = int(sys.argv[1])
 
+    # main loop
     while True:
 
         squareStart = 0.0
@@ -53,8 +86,9 @@ if __name__ == '__main__':
             maxRadius – Maximum circle radius.
 
         '''
+        # detecting the cicles from videostream
         circles = cv3.HoughCircles(filtered_gray,cv3.HOUGH_GRADIENT,1,25,
-                                    param1=200,param2=22,minRadius=5,maxRadius=25)
+                                    param1=220,param2=20,minRadius=5,maxRadius=25)
 
         #if measureTimeInterval == int(sys.argv[1]):
             #squareStart = LieDetectorByEyePupilResize(circles)
@@ -62,31 +96,35 @@ if __name__ == '__main__':
         if circles is not None:
             circles = np.uint16(np.around(circles))
             for i in circles[0,:]:
-                # draw the outer circle
-                cv3.circle(frame,(i[0],i[1]),i[2],(0,255,0),1)
-                # draw the center of the circle
-                cv3.circle(frame,(i[0],i[1]),2,(0,0,255),2)
-                # calc
+                # if the detected circle square > PATCH_OF_REFLECTED_LIGHT (filtering REFLECTED_LIGHT circles)
+                if circlesSquareCalculation( i[0], i[1], i[2] ) > PATCH_OF_REFLECTED_LIGHT:
+                    # draw the outer circle
+                    cv3.circle(frame,(i[0],i[1]),i[2],(0,255,0),1)
+                    # draw the center of the circle
+                    cv3.circle(frame,(i[0],i[1]),2,(0,0,255),2)
+                # save measure in the begining of time interval
                 if measureTimeInterval == int(sys.argv[1]):
-                    squareStart = LieDetectorByEyePupilResize( i[0], i[1], i[2] )
-                squareResult = LieDetectorByEyePupilResize( i[0], i[1], i[2] )
+                    if circlesSquareCalculation( i[0], i[1], i[2] ) > PATCH_OF_REFLECTED_LIGHT:
+                        squareStart = circlesSquareCalculation( i[0], i[1], i[2] )
+                # save measure in the end of time interval
+                if circlesSquareCalculation( i[0], i[1], i[2] ) > PATCH_OF_REFLECTED_LIGHT:
+                    squareResult = circlesSquareCalculation( i[0], i[1], i[2] )
         cv3.imshow('Videonistagmography System - Circles Detected', frame)
 
+        # decrease the timer counter
         measureTimeInterval -= 1
 
+        # in the end of time interval - analysis the eye pupil circle resize
         if measureTimeInterval == 0:
-            print("Time Interval is over")
-            #squareResult = LieDetectorByEyePupilResize(circles)
+            LieDetectorByEyePupilResize(squareStart, squareResult)
+            # regenerate the timer
             measureTimeInterval = int(sys.argv[1])
-            if math.fabs(squareResult - squareStart) > EDGE_DETECTOR_OF_LIE:
-                print("He/She is liar and forger")
-            else:
-                print("He/She is fine human")
 
         #cv3.waitKey(25)
         k = cv3.waitKey(30) & 0xff
         if k == 27:
             break
 
+    #
     cap.release()
     cv3.destroyAllWindows()
